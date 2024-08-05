@@ -22,6 +22,5 @@ fn main() {
 
     let text: Vec<String> = matches.get_many("text").unwrap().cloned().collect();
     let omit_newline = matches.get_flag("omit_newline");
-    let ending = if omit_newline { "" } else { "\n" };
-    print!("{}{ending}", text.join(" "));
+    print!("{}{}", text.join(" "), if omit_newline { "" } else { "\n" });
 }
