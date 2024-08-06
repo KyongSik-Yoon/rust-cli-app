@@ -1,33 +1,61 @@
-use std::fs;
+use std::{fs, io};
 
+use anyhow::{Context, Ok, Result};
 use assert_cmd::Command;
 use predicates::prelude::predicate;
+use pretty_assertions::assert_eq;
 
 #[test]
-fn dies_no_args() {
-    let mut cmd = Command::cargo_bin("echor").unwrap();
+fn dies_no_args() -> Result<()> {
+    let mut cmd = Command::cargo_bin("echor")?;
     cmd.assert()
         .failure()
         .stderr(predicate::str::contains("Usage"));
+    Ok(())
 }
 
 #[test]
-fn runs() {
-    let mut cmd = Command::cargo_bin("echor").unwrap();
-    cmd.arg("hello").assert().success();
+fn hello1() -> Result<()> {
+    run(&["Hello there"], "tests/expected/hello1.txt")
 }
 
 #[test]
-fn hello1() {
-    let outfile = "tests/expected/hello1.txt";
-    let expected = fs::read_to_string(outfile).unwrap();
+fn hello2() -> Result<()> {
+    run(&["Hello", "there"], "tests/expected/hello2.txt")
+}
 
-    #[cfg(windows)]
-    let expected = expected.replace("\r\n", "\n");
+#[test]
+fn hello3() -> Result<()> {
+    run(&["Hello  there", "-n"], "tests/expected/hello1.n.txt")
+}
 
-    #[cfg(not(windows))]
-    let expected = expected;
+#[test]
+fn hello4() -> Result<()> {
+    run(&["-n", "Hello", "there"], "tests/expected/hello2.n.txt")
+}
 
-    let mut cmd = Command::cargo_bin("echor").unwrap();
-    cmd.arg("Hello there").assert().success().stdout(expected);
+fn run(args: &[&str], expected_file: &str) -> Result<()> {
+    let expected = normalize_newlines(fs::read_to_string(expected_file))?;
+    let output = Command::cargo_bin("echor")?
+        .args(args)
+        .output()
+        .expect("fail");
+
+    let stdout = String::from_utf8(output.stdout).expect("invalid UTF-8");
+    assert_eq!(stdout, expected);
+    Ok(())
+}
+
+fn normalize_newlines(str: io::Result<String>) -> Result<String> {
+    let s = str.context("Failed to read string")?;
+    Ok(
+        #[cfg(windows)]
+        {
+            s.replace("\r\n", "\n")
+        },
+        #[cfg(not(windows))]
+        {
+            s
+        }
+    )
 }
