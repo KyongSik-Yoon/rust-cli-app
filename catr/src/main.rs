@@ -1,5 +1,6 @@
 use clap::{Arg, ArgAction, Command};
 
+#[allow(dead_code)]
 #[derive(Debug)]
 struct Args {
     files: Vec<String>,
@@ -14,11 +15,10 @@ fn get_args() -> Args {
         .about("Rust version of `cat`")
         .arg(
             Arg::new("files")
-                .required(true)
                 .value_name("FILE")
-                .num_args(0..)
+                .num_args(1..)
                 .help("Input file(s)")
-                .default_value("-"),
+                .default_value("-")
         )
         .arg(
             Arg::new("number_lines")
