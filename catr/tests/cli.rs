@@ -53,7 +53,11 @@ fn skips_bad_file() -> Result<()> {
 
 // --------------------------------------------------
 fn run(args: &[&str], expected_file: &str) -> Result<()> {
-    let expected = fs::read_to_string(expected_file)?;
+    let mut expected = fs::read_to_string(expected_file)?;
+    #[cfg(windows)]
+    {
+        expected = expected.replace("\r\n", "\n")
+    }
     let output = Command::cargo_bin(PRG)?.args(args).output().unwrap();
     assert!(output.status.success());
 
@@ -70,7 +74,11 @@ fn run_stdin(
     expected_file: &str,
 ) -> Result<()> {
     let input = fs::read_to_string(input_file)?;
-    let expected = fs::read_to_string(expected_file)?;
+    let mut expected = fs::read_to_string(expected_file)?;
+    #[cfg(windows)]
+    {
+        expected = expected.replace("\r\n", "\n");
+    }
     let output = Command::cargo_bin(PRG)?
         .write_stdin(input)
         .args(args)
